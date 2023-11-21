@@ -7,7 +7,7 @@ ar2 = numpy.array([3,2,1])
 
 print(ar1,ar2)
 test1 = numpy.dot(ar1, ar2) # 9*3 = 27 + 8*2 = 16 + 7*1 = 7
-print(test1) #27 + 16 + 7 = 50 prints 50
+print(test1) # 27 + 16 + 7 = 50 prints 50
 
 # has a matrix class for faster matrix operations
 def normal():

@@ -7,7 +7,7 @@ import numpy, math
 
 def onAppStart(app):
     app.drawTransform = True
-
+    
     # Open image from local directory
     app.image = Image.open("marioKart.png")
     
@@ -30,14 +30,18 @@ def onAppStart(app):
 
     app.image = app.image.resize((app.width, app.height))
 
-    xShift = 10000
-    yShift = 0
+    xShift = 5000
+    yShift = -450
+
+    app.xShift = 5000
+    app.yShift = -450
+
     x = 725
     y = 600
 
     #This correction seems necessary for some reason, but I'm not doing the math particularly well
-    x = app.width/2-x
-    y = app.height-y
+    x = app.width/2-app.x
+    y = app.height-app.y
 
     
     angle = 0
@@ -63,6 +67,18 @@ def onAppStart(app):
     app.transformedImage = CMUImage(app.transformedImage)
     # app.transformedImage2 = CMUImage(app.transformedImage2)
 
+# def moveForward(app,x,y):
+#     app.y -= 20
+#     updateTransformation(app,x,y)
+
+# def updateTransformation(app,x,y):
+#     newcoeffs = find_coeffs(
+#         [(0-x, 0-app.y), (app.width-x, 0-app.y), (app.width-x, app.height-y), (0-x, app.height-y)],
+#         [(0, 0-app.yShift), (app.width, 0-app.yShift), (app.width+app.xShift, app.height), (0-app.xShift, app.height)])
+#     app.transformedImage2 = app.image.transform((800, 800), Image.PERSPECTIVE,
+#         newcoeffs, Image.BICUBIC)
+#     app.transformedImage2 = CMUImage(app.transformedImage2)
+
 def find_coeffs(source_coords, target_coords):
     matrix = []
     for s, t in zip(source_coords, target_coords):
@@ -82,6 +98,9 @@ def onMousePress(app, x, y):
     app.drawTransform = not app.drawTransform
 
 def onKeyPress(app, key):
+    # if key == 2:
+    #     app.drawTransform = False
+    #     moveForward(app,app.x,app.y)
     pass
     # app.drawTransform = not app.drawTransform
 
@@ -90,8 +109,7 @@ def redrawAll(app):
         drawImage(app.transformedImage,app.width/2, app.height/2, align='center')
     else:
         pass
-        #drawImage(app.transformedImage2,app.width/2, app.height/2, align='center')
-        drawImage(app.image,app.width/2, app.height/2, align='center')
+        #drawImage(app.image,app.width/2, app.height/2, align='center')
 
 def main():
     runApp(width=800,height=800)
