@@ -2,8 +2,11 @@ from cmu_graphics import *
 from PIL import Image
 from PIL import ImageFilter
 import math
+import random
 
 def onAppStart(app):
+
+#---Map Stuff------------------------------------------------
     #Open map and scale to canvas size (could scale to some other size though)
     app.map = Image.open('images/marioKart.png')
     app.map = app.map.resize((app.width, app.height))
@@ -28,13 +31,27 @@ def onAppStart(app):
     app.cameraHeight = 50
 
     #We can't quite go this fast, but we can try
-    app.stepsPerSecond = 30
+    app.game_stepsPerSecond = 30
     app.barrierList = [(232,232,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
     #Calculate the initial view
     makePerspective(app)
-    
-    
-    
+
+#--Selection Screen-------------------------------------------------
+    app.select = Image.open('images/selectionscreen.png')
+    app.shift = 0
+    app.select_stepsPerSecond = 10
+    app.message = "Choose your driver.... "
+    app.paused = True
+
+#--Title Screen---------------------------------------------
+    app.titlescreen = Image.open('images/title.png')
+    app.start = False
+    app.opacity = 0
+    app.title_stepsPerSecond = 1
+    app.fiftycc = False
+    app.hundredcc = False
+#--Game---------------------------------------------
+
 #This function finds a pixel on the map along a line of sight
 def makePerspective(app):
     #Scan left to right
@@ -64,10 +81,12 @@ def makePerspective(app):
     # app.view = app.view.filter(ImageFilter.EMBOSS)
 
 
-def onKeyPress(app,key):
+def game_onKeyPress(app,key):
     currPix = app.map.getpixel((app.x,app.y))
     if key == 'p': #p draws the map
         app.perspective = not app.perspective
+    elif key == 'space':
+        setActiveScreen('title')
     elif key == 'left': #left and right change the angle
         app.angle -= 5
     elif key == 'right':
@@ -97,14 +116,14 @@ def onKeyPress(app,key):
                 app.x += 5
     makePerspective(app)
 
-def onStep(app):
+def game_onStep(app):
     if app.spin:
         app.angle += 5
         makePerspective(app)
     print("You are on this color: ", app.map.getpixel((app.x,app.y)))
     
 
-def redrawAll(app):
+def game_redrawAll(app):
     if app.perspective:
         ## Draw the perspective view.  
         ## Unsure whether resizing with pil or cmuImage is faster
@@ -116,26 +135,57 @@ def redrawAll(app):
         drawImage(CMUImage(app.map),0,0)
         drawCircle(app.x, app.y, 10, fill='red')
 
-def main():
-    runApp(width=600, height=600)
+#--Selection Screen--------------------------------------------
+def select_redrawAll(app):
+    resizedView = app.select.resize((app.width,app.height))
+    drawImage(CMUImage(resizedView),0,0)
+    for i in range(25):
+        drawLabel(app.message[(i+ app.shift) % len(app.message)],120 + 20*i,200,size = 20,bold = True,fill = 'yellow')
 
-if __name__ == '__main__':
-    main()
+def select_onStep(app):
+    app.shift += 1
 
-# works but updates the image on the next key hold 
-# def onKeyHold(app,keys):
-#     currPix = app.map.getpixel((app.x,app.y))
-#     if 'left' in keys: #left and right change the angle
-#         app.angle -= 5
-#     elif 'right' in keys:
-#         app.angle += 5
-#     if currPix not in app.barrierList:
-#         pass
-#     if 'up' in keys:
-#         app.y += 5
-#     elif 'down' in keys:
-#         app.y -= 5
-#     elif 'a' in keys:
-#         app.x -= 5
-#     elif 'd' in keys:
-#         app.x += 5
+def select_onKeyPress(app, key):
+    if key == 'space':
+        setActiveScreen('game')
+    
+
+#--Title Screen--------------------------------------------
+
+def title_redrawAll(app):
+    resizedView = app.titlescreen.resize((app.width,app.height))
+    drawImage(CMUImage(resizedView),0,0)
+    if app.start:
+        drawRect(150,200,100,60, opacity = app.opacity)
+        drawLabel('50 cc', 200,215,size =20,bold = True, fill = 'white')
+        drawLabel('100 cc', 200,245,size =20,bold = True, fill = 'white')
+    else:
+        drawLabel('press b to start', 200,200,size =20,bold = True)
+    if app.fiftycc:
+        print('yayyyy')
+    elif app.hundredcc:
+        print('yayyy 100000')
+    
+
+def title_onStep(app):
+    if app.start:
+        while app.opacity < 100:
+            app.opacity += 1
+
+def title_onKeyPress(app, key):
+    if key == 'b':
+        app.start = True 
+    if key == 'space':
+        setActiveScreen('select')
+
+def title_onMousePress(app,mouseX,mouseY):
+    if 175 < mouseX < 225 and app.start: 
+        if 205 < mouseY < 220 and app.hundredcc != True:
+            app.fiftycc = True
+        if 235 < mouseY < 250 and app.fiftycc != True:
+            app.hundredcc = True
+        
+
+
+# Your screen names should be strings
+runAppWithScreens(initialScreen='title')
