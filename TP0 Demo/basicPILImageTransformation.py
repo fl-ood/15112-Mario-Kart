@@ -3,13 +3,15 @@ from PIL import Image
 import os, pathlib
 import numpy, math
 
+ 
+
 #See: https://pillow.readthedocs.io/en/stable/reference/Image.html 
 
 def onAppStart(app):
     app.drawTransform = True
     
     # Open image from local directory
-    app.image = Image.open("marioKart.png")
+    app.image = Image.open("images/marioKart.png")
     
     # If the above line displays the error
     # FileNotFoundError: [Errno 2] No such file or directory: 'images/Caaaaat.jpg'
@@ -31,17 +33,20 @@ def onAppStart(app):
     app.image = app.image.resize((app.width, app.height))
 
     xShift = 5000
-    yShift = -450
+    yShift = -400
 
-    app.xShift = 5000
-    app.yShift = -450
+    # app.xShift = 5000
+    # app.yShift = -450
 
     x = 725
-    y = 600
+    y = 400
+
+    # app.x = 725
+    # app.y = 600
 
     #This correction seems necessary for some reason, but I'm not doing the math particularly well
-    x = app.width/2-app.x
-    y = app.height-app.y
+    x = app.width/2-x
+    y = app.height-y
 
     
     angle = 0
@@ -51,33 +56,27 @@ def onAppStart(app):
         [(0-x, 0-y), (app.width-x, 0-y), (app.width-x, app.height-y), (0-x, app.height-y)],
         [(0, 0-yShift), (app.width, 0-yShift), (app.width+xShift, app.height), (0-xShift, app.height)])
     
-    #rotationcoeffs = find_rotation_coeffs(30,x,y)
-    
-    #newcoeffs = find_coeffs(
-        #[(0-x, 0-y), (app.width-x, 0-y), (app.width-x, app.height-y), (0-x, app.height-y)], rotationcoeffs)
-    
     app.transformedImage = app.image.transform((800, 800), Image.PERSPECTIVE,
         coeffs, Image.BICUBIC)
     
-    # app.transformedImage2 = app.image.transform((800, 800), Image.PERSPECTIVE,
-        # newcoeffs, Image.BICUBIC)
+  
     # Cast image type to CMUImage to allow for faster drawing
     app.image = CMUImage(app.image)
 
-    app.transformedImage = CMUImage(app.transformedImage)
-    # app.transformedImage2 = CMUImage(app.transformedImage2)
+    
+    
 
-# def moveForward(app,x,y):
-#     app.y -= 20
-#     updateTransformation(app,x,y)
+def moveForward(app,x,y):
+    app.y -= 20
+    updateTransformation(app,app.x,app.y)
 
-# def updateTransformation(app,x,y):
-#     newcoeffs = find_coeffs(
-#         [(0-x, 0-app.y), (app.width-x, 0-app.y), (app.width-x, app.height-y), (0-x, app.height-y)],
-#         [(0, 0-app.yShift), (app.width, 0-app.yShift), (app.width+app.xShift, app.height), (0-app.xShift, app.height)])
-#     app.transformedImage2 = app.image.transform((800, 800), Image.PERSPECTIVE,
-#         newcoeffs, Image.BICUBIC)
-#     app.transformedImage2 = CMUImage(app.transformedImage2)
+def updateTransformation(app,x,y):
+    newcoeffs = find_coeffs(
+        [(0-x, 0-app.y), (app.width-x, 0-app.y), (app.width-x, app.height-y), (0-x, app.height-y)],
+        [(0, 0-app.yShift), (app.width, 0-app.yShift), (app.width+app.xShift, app.height), (0-app.xShift, app.height)])
+    app.transformedImage = app.image.transform((800, 800), Image.PERSPECTIVE,
+        newcoeffs, Image.BICUBIC)
+    
 
 def find_coeffs(source_coords, target_coords):
     matrix = []
@@ -98,15 +97,16 @@ def onMousePress(app, x, y):
     app.drawTransform = not app.drawTransform
 
 def onKeyPress(app, key):
-    # if key == 2:
-    #     app.drawTransform = False
-    #     moveForward(app,app.x,app.y)
-    pass
+    if key == 2:
+        moveForward(app,app.x,app.y)
+
+    
     # app.drawTransform = not app.drawTransform
 
 def redrawAll(app):
     if app.drawTransform:
-        drawImage(app.transformedImage,app.width/2, app.height/2, align='center')
+        transformedImage = CMUImage(app.transformedImage)
+        drawImage(transformedImage,app.width/2, app.height/2, align='center')
     else:
         pass
         #drawImage(app.image,app.width/2, app.height/2, align='center')
