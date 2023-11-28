@@ -87,9 +87,9 @@ def game_onKeyPress(app,key):
         app.perspective = not app.perspective
     elif key == 'space':
         setActiveScreen('title')
-    elif key == 'left': #left and right change the angle
+    elif key == 'a': #left and right change the angle
         app.angle -= 5
-    elif key == 'right':
+    elif key == 'd':
         app.angle += 5
 
     elif key == 's': #s spins the camera
@@ -106,11 +106,11 @@ def game_onKeyPress(app,key):
             new_pixel = app.map.getpixel((app.x, app.y - 5))
             if new_pixel not in app.barrierList:
                 app.y -= 5
-        elif key == 'a':
+        elif key == 'left':
             new_pixel = app.map.getpixel((app.x - 5, app.y))
             if new_pixel not in app.barrierList:
                 app.x -= 5
-        elif key == 'd':
+        elif key == 'right':
             new_pixel = app.map.getpixel((app.x + 5, app.y))
             if new_pixel not in app.barrierList:
                 app.x += 5
@@ -154,7 +154,7 @@ def select_onKeyPress(app, key):
 
 def title_redrawAll(app):
     resizedView = app.titlescreen.resize((app.width,app.height))
-    drawImage(CMUImage(resizedView),0,0)
+    drawImage(CMUImage(resizedView),0,0,width =app.width,height = app.height  )
     if app.start:
         drawRect(150,200,100,60, opacity = app.opacity)
         drawLabel('50 cc', 200,215,size =20,bold = True, fill = 'white')

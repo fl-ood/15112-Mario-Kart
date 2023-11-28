@@ -5,6 +5,7 @@ from cmu_graphics import *
 from PIL import Image
 from PIL import ImageFilter
 import math
+from numba import njit
 
 def onAppStart(app):
     #Open map and scale to canvas size (could scale to some other size though)

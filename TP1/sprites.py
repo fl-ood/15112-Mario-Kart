@@ -25,7 +25,6 @@ def onAppStart(app):
     app.stepsPerSecond = 50
 
 def onStep(app):
-    
     if app.turningLeft:
         while app.spriteCounter < 3:
             app.spriteCounter += 1
@@ -35,7 +34,11 @@ def onStep(app):
 def onKeyHold(app,keys):
     print(keys)
     if "left" in keys:
-        app.turningLeft = not app.turningLeft 
+        app.turningLeft = True
+
+def onKeyRelease(app,keys):
+    if 'left' not in keys:
+        app.turningLeft = False
         
 
 def redrawAll(app):

@@ -17,7 +17,8 @@ def main():
     sky = pg.surfarray.array3d(pg.transform.scale(sky, (360, halfvres*2)))
     ns = halfvres/((halfvres+0.1-np.linspace(0, halfvres, halfvres)))# depth
     cos22 = np.cos(np.deg2rad(np.linspace(-30,30, hres)/mod)) # perspective correction
-    
+    shade = 0.4 + 0.6*(np.linspace(0, halfvres, halfvres)/halfvres)
+    shade = np.dstack((shade, shade, shade))
 
     frame = np.ones([hres, halfvres*2, 3])
     while running: #main game loop
@@ -30,7 +31,7 @@ def main():
             frame[i][:halfvres] = sky[int(np.rad2deg(rot_i)%360)][:halfvres]/255
             xs, ys = posx+ns*cos/cos2, posy+ns*sin/cos2
             xxs, yys = (xs/30%1*1023).astype('int'), (ys/30%1*1023).astype('int')
-            frame[i][2*halfvres-len(ns):2*halfvres] = kart[np.flip(xxs),np.flip(yys)]/255
+            frame[i][2*halfvres-len(ns):2*halfvres] = shade*kart[np.flip(xxs),np.flip(yys)]/255
                           
         surf = pg.surfarray.make_surface(frame*255)
         surf = pg.transform.scale(surf, (800, 600))

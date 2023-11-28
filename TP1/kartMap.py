@@ -3,6 +3,7 @@ from PIL import Image
 from PIL import ImageFilter
 import math
 
+
 def onAppStart(app):
     #Open map and scale to canvas size (could scale to some other size though)
     app.map = Image.open('images/marioKart.png')
@@ -10,7 +11,7 @@ def onAppStart(app):
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 7 # Lower = better resolution, slower speed
+    app.scaleDown = 2 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
     #Start in perspective view w/spinning camera
