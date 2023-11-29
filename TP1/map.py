@@ -13,7 +13,7 @@ class Map():
         self.image = app.map.convert('RGB')
 
         #Make a new image with a scaled down resolution
-        self.scaleDown = 2 # Lower = better resolution, slower speed
+        self.scaleDown = 7 # Lower = better resolution, slower speed
         # perspective will be the 2.5D image
         self.perspective = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
         

@@ -20,9 +20,20 @@ def onAppStart(app):
     
 #-------------------
     #Make a new image with a scaled down resolution
-    app.scaleDown = 6 # Lower = better resolution, slower speed
+    app.scaleDown = 7 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
+
+    #-------Sprite Stuff------
+    app.sprite = Image.open('sprites/mario-3solo.png') # sprites come from The Spriters Resource
+    app.w,app.h = app.sprite.size
+    app.unit = app.w
+
+    frame = app.sprite.crop((app.unit,0, app.unit, app.h))
+    app.sprite = CMUImage(frame)
+
+
+#-------------------
     #Start in perspective view w/spinning camera
     app.perspective = True
     app.spin = True
