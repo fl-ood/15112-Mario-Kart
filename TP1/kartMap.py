@@ -9,16 +9,7 @@ def onAppStart(app):
     app.map = Image.open('images/marioKart.png')
     app.map = app.map.resize((app.width, app.height))
     app.map = app.map.convert('RGB')
-    app.sprite = Image.open('sprites/mario-3solo.gif') # sprites come from The Spriters Resource
-#-------Sprite Stuff------
-    app.w,app.h = app.sprite.size
-    app.unit = app.w
 
-    frame = app.sprite.crop((app.unit,0, app.unit, app.h))
-    app.sprite = CMUImage(frame)
-    
-    
-#-------------------
     #Make a new image with a scaled down resolution
     app.scaleDown = 7 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
