@@ -11,7 +11,7 @@ def onAppStart(app):
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 7 # Lower = better resolution, slower speed
+    app.scaleDown = 6 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
 
@@ -37,7 +37,7 @@ def onAppStart(app):
     app.angle = 0
 
     #Camera position
-    app.cameraHeight = 50
+    app.cameraHeight = 20
 
     #We can't quite go this fast, but we can try
     app.stepsPerSecond = 30
