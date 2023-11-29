@@ -11,9 +11,20 @@ def onAppStart(app):
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 2 # Lower = better resolution, slower speed
+    app.scaleDown = 7 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
+
+    #-------Sprite Stuff------
+    app.sprite = Image.open('sprites/mario-3solo.png') # sprites come from The Spriters Resource
+    app.w,app.h = app.sprite.size
+    app.unit = app.w
+
+    frame = app.sprite.crop((app.unit,0, app.unit, app.h))
+    app.sprite = CMUImage(frame)
+
+
+#-------------------
     #Start in perspective view w/spinning camera
     app.perspective = True
     app.spin = True
@@ -112,6 +123,7 @@ def redrawAll(app):
         resizedView = app.view.resize((app.width,app.height))
         #drawImage(CMUImage(app.image2),0,0, width = app.width, height = app.height)
         drawImage(CMUImage(resizedView),0,0)
+        drawImage(app.sprite,0, 0, align = 'center')
 
     else:
         drawImage(CMUImage(app.map),0,0)
