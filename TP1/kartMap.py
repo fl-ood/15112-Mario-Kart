@@ -9,9 +9,18 @@ def onAppStart(app):
     app.map = Image.open('images/marioKart.png')
     app.map = app.map.resize((app.width, app.height))
     app.map = app.map.convert('RGB')
+    app.sprite = Image.open('sprites/mario-3solo.gif') # sprites come from The Spriters Resource
+#-------Sprite Stuff------
+    app.w,app.h = app.sprite.size
+    app.unit = app.w
 
+    frame = app.sprite.crop((app.unit,0, app.unit, app.h))
+    app.sprite = CMUImage(frame)
+    
+    
+#-------------------
     #Make a new image with a scaled down resolution
-    app.scaleDown = 2 # Lower = better resolution, slower speed
+    app.scaleDown = 6 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
     #Start in perspective view w/spinning camera
@@ -26,7 +35,7 @@ def onAppStart(app):
     app.angle = 0
 
     #Camera position
-    app.cameraHeight = 50
+    app.cameraHeight = 20
 
     #We can't quite go this fast, but we can try
     app.stepsPerSecond = 30
@@ -112,6 +121,7 @@ def redrawAll(app):
         resizedView = app.view.resize((app.width,app.height))
         #drawImage(CMUImage(app.image2),0,0, width = app.width, height = app.height)
         drawImage(CMUImage(resizedView),0,0)
+        drawImage(app.sprite,0, 0, align = 'center')
 
     else:
         drawImage(CMUImage(app.map),0,0)
