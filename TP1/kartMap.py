@@ -40,7 +40,7 @@ def onAppStart(app):
     app.cameraHeight = 20
 
     #We can't quite go this fast, but we can try
-    app.stepsPerSecond = 30
+    app.stepsPerSecond = 10
     app.barrierList = [(232,232,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
     #Calculate the initial view
     makePerspective(app)
@@ -113,8 +113,37 @@ def onStep(app):
     if app.spin:
         app.angle += 5
         makePerspective(app)
-    print("You are on this color: ", app.map.getpixel((app.x,app.y)))
+        print("You are on this color: ", app.map.getpixel((app.x,app.y)))
+    else:
+        if app.angle <= 180:
+            app.sign = -1
+        else:
+            app.sign = 1
+        print(f'This is your angle: {app.angle}')
+
+        # Update the position based on the mouse direction
+        dx = 5 * math.cos(math.radians(app.angle))
+        dy = 5 * math.sin(math.radians(app.angle))
+        currPix = app.map.getpixel((app.x,app.y))
+        if currPix not in app.barrierList:
+            new_pixel = app.map.getpixel((app.x +dx, app.y + dy))
+            if new_pixel not in app.barrierList:
+                app.x += dx
+                app.y += dy
     
+    
+
+    makePerspective(app)
+   
+    
+
+
+def onMouseMove(app,mouseX,mouseY):
+    if app.spin == False:
+        app.angle = mouseX
+    
+    
+
 
 def redrawAll(app):
     if app.perspective:
@@ -123,7 +152,7 @@ def redrawAll(app):
         resizedView = app.view.resize((app.width,app.height))
         #drawImage(CMUImage(app.image2),0,0, width = app.width, height = app.height)
         drawImage(CMUImage(resizedView),0,0)
-        drawImage(app.sprite,0, 0, align = 'center')
+        # drawImage(app.sprite,0, 0, align = 'center')
 
     else:
         drawImage(CMUImage(app.map),0,0)
