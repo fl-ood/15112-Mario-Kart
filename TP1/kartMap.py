@@ -13,7 +13,6 @@ def onAppStart(app):
     #Make a new image with a scaled down resolution
     app.scaleDown = 7 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
-    
 
     #-------Sprite Stuff------
     app.sprite = Image.open('sprites/mario-3solo.png') # sprites come from The Spriters Resource
@@ -41,9 +40,10 @@ def onAppStart(app):
 
     #We can't quite go this fast, but we can try
     app.stepsPerSecond = 10
-    app.barrierList = [(232,232,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
+    app.barrierList = [(232,232,0),(0,0,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
     #Calculate the initial view
     makePerspective(app)
+    
     
     
     
@@ -84,8 +84,7 @@ def onKeyPress(app,key):
         app.angle -= 5
     elif key == 'right':
         app.angle += 5
-
-    elif key == 's': #s spins the camera
+    elif key == '1': #s spins the camera
         app.spin = not app.spin
     
 
@@ -113,14 +112,14 @@ def onStep(app):
     if app.spin:
         app.angle += 5
         makePerspective(app)
-        print("You are on this color: ", app.map.getpixel((app.x,app.y)))
+        
     else:
         if app.angle <= 180:
             app.sign = -1
         else:
             app.sign = 1
         print(f'This is your angle: {app.angle}')
-
+        print("You are on this color: ", app.map.getpixel((app.x,app.y)))
         # Update the position based on the mouse direction
         dx = 5 * math.cos(math.radians(app.angle))
         dy = 5 * math.sin(math.radians(app.angle))

@@ -5,7 +5,6 @@ import math
 import random
 
 def onAppStart(app):
-
 #---Map Stuff------------------------------------------------
     #Open map and scale to canvas size (could scale to some other size though)
     app.map = Image.open('images/marioKart.png')
@@ -31,8 +30,13 @@ def onAppStart(app):
     app.cameraHeight = 50
 
     #We can't quite go this fast, but we can try
-    app.game_stepsPerSecond = 30
-    app.barrierList = [(232,232,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
+    app.select_stepsPerSecond = 30
+    app.stepsPerSecond = 10
+    # list of the rgb values on the edges of the map 
+    app.barrierList = [(232,232,0),(0,0,0),(152,152,0),(0, 32, 248),
+                       (104,104,248),(232,0,0),(248,72,72),(0,128,0),
+                       (0, 136, 0),(0,168,0),(0,208,0),(120,0,0),(0,232,0),
+                       (248,248,144),(96,248,96)]
     #Calculate the initial view
     makePerspective(app)
 
@@ -50,12 +54,20 @@ def onAppStart(app):
     app.title_stepsPerSecond = 1
     app.fiftycc = False
     app.hundredcc = False
-#--Game---------------------------------------------
 
+#-------Sprite Stuff------
+    app.sprite = Image.open('sprites/mario-3solo.png') # sprites come from The Spriters Resource
+    app.w,app.h = app.sprite.size
+    app.unit = app.w
+
+    frame = app.sprite.crop((app.unit,0, app.unit, app.h))
+    app.sprite = CMUImage(frame)
+
+
+#--Game---------------------------------------------
 #This function finds a pixel on the map along a line of sight
 def makePerspective(app):
     #Scan left to right
-    
     for x in range(app.view.width): 
         yaw = (x/app.view.width) * app.fov - (app.fov/2)  #[-30, -29... 0 ... 29 30]
         dxScale = math.cos((app.angle+yaw)*math.pi/180)
@@ -85,14 +97,11 @@ def game_onKeyPress(app,key):
     currPix = app.map.getpixel((app.x,app.y))
     if key == 'p': #p draws the map
         app.perspective = not app.perspective
-    elif key == 'space':
-        setActiveScreen('title')
     elif key == 'a': #left and right change the angle
         app.angle -= 5
     elif key == 'd':
         app.angle += 5
-
-    elif key == 's': #s spins the camera
+    elif key == '1': #s spins the camera
         app.spin = not app.spin
     
 
@@ -120,8 +129,27 @@ def game_onStep(app):
     if app.spin:
         app.angle += 5
         makePerspective(app)
+    else:
+        print(f'This is your angle: {app.angle}')
+    
+        # Update the position based on the mouse direction
+        dx = 5 * math.cos(math.radians(app.angle))
+        dy = 5 * math.sin(math.radians(app.angle))
+        currPix = app.map.getpixel((app.x,app.y))
+        if currPix not in app.barrierList:
+            new_pixel = app.map.getpixel((app.x +dx, app.y + dy))
+            if new_pixel not in app.barrierList:
+                app.x += dx
+                app.y += dy
     print("You are on this color: ", app.map.getpixel((app.x,app.y)))
     
+
+    makePerspective(app)
+    
+def game_onMouseMove(app,mouseX,mouseY):
+    if app.spin == False:
+        app.angle = mouseX
+
 
 def game_redrawAll(app):
     if app.perspective:
