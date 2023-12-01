@@ -6,6 +6,12 @@ import random
 import time
 
 
+
+###DIRECTIONS:
+# When app starts, UI hasnt been fully scaled/configured yet so press space twice
+# When on the track the map will do a 360 then wait 3 seconds and the game will start, you move with your mouse and must cross the finsih line forward 3 times to win
+
+
 def onAppStart(app):
 
     app.width = 600
@@ -28,11 +34,9 @@ def onAppStart(app):
     #Set some values
     app.fov = 60
 
-    #Car position
+    #Camera position
     app.x, app.y = 539.3464291081129, 346.7310349918769
     app.angle = 0
-
-    #Camera position
     app.cameraHeight = 20
 
     #We can't quite go this fast, but we can try
@@ -60,7 +64,7 @@ def onAppStart(app):
 #--Selection Screen-------------------------------------------------
     app.select = Image.open('images/selectionscreen.png') # title screen image is from google https://tcrf.net/images/8/8c/Smk_title_bg_us.png
     app.shift = 0
-    app.select_stepsPerSecond = 10
+    app.stepsPerSecond = 10
     app.message = "Choose your driver.... "
     app.paused = True
     app.countdown = False
@@ -98,6 +102,8 @@ def startRace(app):
         time.sleep(0.5)
         app.gameStart = True
 
+
+
 def passedFinishLine(app,dy):
     if 498 <= app.x <= 593:
         movement = app.y + dy
@@ -130,7 +136,7 @@ def makePerspective(app):
             
             dx = dist*dxScale
             dy = dist*dyScale
-            fx = app.x + dx
+            fx = app.x + dx # make other variable such as cam.x cam.y when drawing sprite
             fy = app.y + dy
             #fx = max(0, min(app.map.width-1, fx))
             #fy = max(0, min(app.map.height-1, fy))
@@ -189,8 +195,13 @@ def game_onStep(app):
     if app.endgame:
         app.gameStart = False
 
+
+    # to convert decimal places
+    # def convert(x,decplaces):
+    #x *= 10**decimalplaces
+
     if app.gameStart:
-        app.laptime += 1/app.stepsPerSecond
+        app.laptime += 1/app.stepsPerSecond # use time.time()
         # Update the position based on the mouse direction
         dx = 5 * math.cos(math.radians(app.angle))
         dy = 5 * math.sin(math.radians(app.angle))
@@ -235,7 +246,7 @@ def game_redrawAll(app):
         drawImage(CMUImage(resizedView),0,0)
         drawLabel(app.lap,300,70,size = 40,bold = True)
         drawLabel(app.laptime,300,20,size = 40,bold = True)
-        if app.gameStart == False and app.count != 0 and app.endgame:
+        if app.gameStart == False and app.count != 0 and not app.endgame:
             drawLabel(app.count,300,300,size = 40,bold = True)
         if app.endgame:
             drawLabel("YOU WON",300,300,size = 40,bold = True)
@@ -253,6 +264,7 @@ def select_redrawAll(app):
         drawLabel(app.message[(i+ app.shift) % len(app.message)],120 + 20*i,200,size = 20,bold = True,fill = 'yellow')
 
 def select_onStep(app):
+
     app.shift += 1
 
 def select_onKeyPress(app, key):
@@ -293,6 +305,7 @@ def title_onKeyPress(app, key):
     if key == 'b':
         app.start = True 
     if key == 'space':
+        app.stepsPerSecond = 10
         setActiveScreen('select')
 
 def title_onMousePress(app,mouseX,mouseY):

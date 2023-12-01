@@ -7,7 +7,7 @@ def onAppStart(app):
     app.turningLeft = False
     spritestrip = Image.open('sprites/mario-3.gif')
     
-    
+    app.currKeys = []
     app.sprites = [ ]
     w,h = spritestrip.size
     unit = w//9
@@ -30,14 +30,17 @@ def onStep(app):
             app.spriteCounter += 1
     else:
         app.spriteCounter = 0
+    print(app.currKeys)
 
 def onKeyHold(app,keys):
-    print(keys)
+    #print(keys)
+    app.currKeys = keys
     if "left" in keys:
         app.turningLeft = True
 
 def onKeyRelease(app,keys):
-    if 'left' not in keys:
+    app.currKeys = keys
+    if 'left' in keys:
         app.turningLeft = False
         
 
