@@ -3,16 +3,22 @@ from PIL import Image
 from PIL import ImageFilter
 import math
 import random
+import time
+
 
 def onAppStart(app):
+
+    app.width = 600
+    app.height = 600
+
 #---Map Stuff------------------------------------------------
     #Open map and scale to canvas size (could scale to some other size though)
-    app.map = Image.open('images/marioKart.png')
+    app.map = Image.open('images/marioKart.png') # from the spriters resource
     app.map = app.map.resize((app.width, app.height))
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 7 # Lower = better resolution, slower speed
+    app.scaleDown = 5 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
     #Start in perspective view w/spinning camera
@@ -23,29 +29,41 @@ def onAppStart(app):
     app.fov = 60
 
     #Car position
-    app.x, app.y = app.width/2, app.height/2-30
+    app.x, app.y = 539.3464291081129, 346.7310349918769
     app.angle = 0
 
     #Camera position
-    app.cameraHeight = 50
+    app.cameraHeight = 20
 
     #We can't quite go this fast, but we can try
     app.select_stepsPerSecond = 30
     app.stepsPerSecond = 10
+    app.speed = 10
     # list of the rgb values on the edges of the map 
-    app.barrierList = [(232,232,0),(0,0,0),(152,152,0),(0, 32, 248),
+    app.barrierList = [(232,232,0),(152,152,0),(0, 32, 248),
                        (104,104,248),(232,0,0),(248,72,72),(0,128,0),
                        (0, 136, 0),(0,168,0),(0,208,0),(120,0,0),(0,232,0),
-                       (248,248,144),(96,248,96)]
+                       (248,248,144),(96,248,96),(0,0,96)]
+    #lsit of rgb values that will slow the player down
+    app.slowTerrain = [(176, 160, 112),(144, 128, 88),(160, 144, 96)]
     #Calculate the initial view
     makePerspective(app)
 
+#--Game Screen-------------------------------------------------
+    app.gameStart = False
+    app.lap = 0
+    app.laptime = 0
+    app.go = False
+    app.count = 0
+    app.endgame = False
+    
 #--Selection Screen-------------------------------------------------
-    app.select = Image.open('images/selectionscreen.png')
+    app.select = Image.open('images/selectionscreen.png') # title screen image is from google https://tcrf.net/images/8/8c/Smk_title_bg_us.png
     app.shift = 0
     app.select_stepsPerSecond = 10
     app.message = "Choose your driver.... "
     app.paused = True
+    app.countdown = False
 
 #--Title Screen---------------------------------------------
     app.titlescreen = Image.open('images/title.png')
@@ -54,8 +72,10 @@ def onAppStart(app):
     app.title_stepsPerSecond = 1
     app.fiftycc = False
     app.hundredcc = False
+    app.highlight50 = 'white'
+    app.highlight100 = 'white'
 
-#-------Sprite Stuff------
+#--Sprite Stuff--------------------------------------------------
     app.sprite = Image.open('sprites/mario-3solo.png') # sprites come from The Spriters Resource
     app.w,app.h = app.sprite.size
     app.unit = app.w
@@ -65,9 +85,39 @@ def onAppStart(app):
 
 
 #--Game---------------------------------------------
+
+# starts the race after a full spin
+def startRace(app):
+    if app.angle == 275 and not app.gameStart:
+        app.spin = False
+        app.countdown = True
+        for i in range(3,0,-1):
+            app.count = i
+            time.sleep(1)
+        app.count = 'GO'
+        time.sleep(0.5)
+        app.gameStart = True
+
+def passedFinishLine(app,dy):
+    if 498 <= app.x <= 593:
+        movement = app.y + dy
+        print(movement)
+
+        if 323 < app.y < 328:
+            if movement > 325:
+                return False
+            else:
+                app.lap += 1
+                
+    print(app.lap)
+#(498,593) = x coord range for finish line
+#325 = y value of the finish line
+
+    
 #This function finds a pixel on the map along a line of sight
 def makePerspective(app):
     #Scan left to right
+    
     for x in range(app.view.width): 
         yaw = (x/app.view.width) * app.fov - (app.fov/2)  #[-30, -29... 0 ... 29 30]
         dxScale = math.cos((app.angle+yaw)*math.pi/180)
@@ -97,68 +147,99 @@ def game_onKeyPress(app,key):
     currPix = app.map.getpixel((app.x,app.y))
     if key == 'p': #p draws the map
         app.perspective = not app.perspective
-    elif key == 'a': #left and right change the angle
+    elif key == 'left': #left and right change the angle
         app.angle -= 5
-    elif key == 'd':
+    elif key == 'right':
         app.angle += 5
-    elif key == '1': #s spins the camera
-        app.spin = not app.spin
+    elif key == '1':
+        app.gameStart = not app.gameStart
+    
     
 
     elif currPix not in app.barrierList:
         # Check if the new position would be on a barrier
-        if key == 'up':
+        if key == 's':
             new_pixel = app.map.getpixel((app.x, app.y + 5))
             if new_pixel not in app.barrierList:
                 app.y += 5
-        elif key == 'down':
+        elif key == 'w':
             new_pixel = app.map.getpixel((app.x, app.y - 5))
             if new_pixel not in app.barrierList:
                 app.y -= 5
-        elif key == 'left':
+        elif key == 'a':
             new_pixel = app.map.getpixel((app.x - 5, app.y))
             if new_pixel not in app.barrierList:
                 app.x -= 5
-        elif key == 'right':
+        elif key == 'd':
             new_pixel = app.map.getpixel((app.x + 5, app.y))
             if new_pixel not in app.barrierList:
                 app.x += 5
     makePerspective(app)
 
 def game_onStep(app):
+    
     if app.spin:
         app.angle += 5
-        makePerspective(app)
-    else:
-        print(f'This is your angle: {app.angle}')
-    
+    if app.gameStart == False:
+        startRace(app)
+
+    if app.lap == 3:
+        app.endgame = True
+
+    if app.endgame:
+        app.gameStart = False
+
+    if app.gameStart:
+        app.laptime += 1/app.stepsPerSecond
         # Update the position based on the mouse direction
         dx = 5 * math.cos(math.radians(app.angle))
         dy = 5 * math.sin(math.radians(app.angle))
+        # checks the  current pixel to see if it is in the list of barriers 
         currPix = app.map.getpixel((app.x,app.y))
         if currPix not in app.barrierList:
-            new_pixel = app.map.getpixel((app.x +dx, app.y + dy))
+            # rechecks the pixel with the added movement to make sure it is legal in order to avoid image crashes
+            new_pixel = app.map.getpixel((app.x + dx, app.y + dy))
             if new_pixel not in app.barrierList:
                 app.x += dx
                 app.y += dy
-    print("You are on this color: ", app.map.getpixel((app.x,app.y)))
-    
+        # slows down the speed when the camera/car is on the sandy terrain
+        if currPix in app.slowTerrain:
+            app.slow = True
+            if app.slow:
+                newSpeed = app.speed // 2
+                app.stepsPerSecond = newSpeed
+        # if it is back in the grey terrain return speed to normal
+        elif currPix == (96,96,96):
+            app.slow = False
+            app.stepsPerSecond = app.speed
+        
+        print(passedFinishLine(app,dy))
 
+    #print("You are on this color: ", app.map.getpixel((app.x,app.y)))
+    
     makePerspective(app)
-    
-def game_onMouseMove(app,mouseX,mouseY):
-    if app.spin == False:
-        app.angle = mouseX
 
+def game_onMouseMove(app,mouseX,mouseY):
+    if app.gameStart:
+        app.angle = mouseX
+        
+    
 
 def game_redrawAll(app):
     if app.perspective:
         ## Draw the perspective view.  
         ## Unsure whether resizing with pil or cmuImage is faster
+
         resizedView = app.view.resize((app.width,app.height))
         #drawImage(CMUImage(app.image2),0,0, width = app.width, height = app.height)
         drawImage(CMUImage(resizedView),0,0)
-
+        drawLabel(app.lap,300,70,size = 40,bold = True)
+        drawLabel(app.laptime,300,20,size = 40,bold = True)
+        if app.gameStart == False and app.count != 0 and app.endgame:
+            drawLabel(app.count,300,300,size = 40,bold = True)
+        if app.endgame:
+            drawLabel("YOU WON",300,300,size = 40,bold = True)
+            drawLabel(f"Your laptime: {app.laptime}",300,350,size = 40,bold = True)
     else:
         drawImage(CMUImage(app.map),0,0)
         drawCircle(app.x, app.y, 10, fill='red')
@@ -167,6 +248,7 @@ def game_redrawAll(app):
 def select_redrawAll(app):
     resizedView = app.select.resize((app.width,app.height))
     drawImage(CMUImage(resizedView),0,0)
+    # draws the driver selection text in a scrolling fashion (used scrolling carpe diems from CS Academy)
     for i in range(25):
         drawLabel(app.message[(i+ app.shift) % len(app.message)],120 + 20*i,200,size = 20,bold = True,fill = 'yellow')
 
@@ -182,23 +264,30 @@ def select_onKeyPress(app, key):
 
 def title_redrawAll(app):
     resizedView = app.titlescreen.resize((app.width,app.height))
-    drawImage(CMUImage(resizedView),0,0,width =app.width,height = app.height  )
+    drawImage(CMUImage(resizedView),0,0,width =app.width,height = app.height)
+    # once b is pressed display the 50cc and 100cc options
     if app.start:
-        drawRect(150,200,100,60, opacity = app.opacity)
-        drawLabel('50 cc', 200,215,size =20,bold = True, fill = 'white')
-        drawLabel('100 cc', 200,245,size =20,bold = True, fill = 'white')
+        drawRect(app.width/2 - 50,app.height/2,100,60, opacity = app.opacity)
+        drawLabel('50 cc', app.width/2,app.height/2 +15,size =20,bold = True, fill = app.highlight50 )
+        drawLabel('100 cc', app.width/2,app.height/2 + 45,size =20,bold = True, fill = app.highlight100)
+    # else display the press b message
     else:
-        drawLabel('press b to start', 200,200,size =20,bold = True)
+        drawLabel('press b to start', app.width/2,app.height/2 + 50,size =20,bold = True, opacity = app.opacity % 100)
+    
     if app.fiftycc:
         print('yayyyy')
+        
+        #will add functionally to set different speeds
     elif app.hundredcc:
         print('yayyy 100000')
+        
     
 
 def title_onStep(app):
-    if app.start:
-        while app.opacity < 100:
-            app.opacity += 1
+    # createa fading word effect on title screen 
+    if not app.start:
+        app.opacity += 5
+    
 
 def title_onKeyPress(app, key):
     if key == 'b':
@@ -207,13 +296,29 @@ def title_onKeyPress(app, key):
         setActiveScreen('select')
 
 def title_onMousePress(app,mouseX,mouseY):
-    if 175 < mouseX < 225 and app.start: 
-        if 205 < mouseY < 220 and app.hundredcc != True:
+    # when clicking the buttons it will set it == to true which will determine the speed, you can't click both buttons
+    if 275 < mouseX < 335 and app.start: 
+        if 300 < mouseY < 330 and app.hundredcc != True:
             app.fiftycc = True
-        if 235 < mouseY < 250 and app.fiftycc != True:
+            #app.speed == TBD
+        if 330 < mouseY < 360 and app.fiftycc != True:
             app.hundredcc = True
-        
+            # app.speed == TBD
 
+
+def title_onMouseMove(app,mouseX,mouseY):
+    # highlights the options
+    if app.start: 
+        if 300 < mouseY < 330 and 275 < mouseX < 335:
+            app.highlight50 = 'yellow'
+            app.highlight100 = 'white'
+        elif 330 < mouseY < 360 and 275 < mouseX < 335:
+            app.highlight100 = 'yellow'
+            app.highlight50 = 'white'
+        else:
+            app.highlight50 = 'white'
+            app.highlight100 = 'white'
+        
 
 # Your screen names should be strings
 runAppWithScreens(initialScreen='title')

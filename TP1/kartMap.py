@@ -22,7 +22,8 @@ def onAppStart(app):
     frame = app.sprite.crop((app.unit,0, app.unit, app.h))
     app.sprite = CMUImage(frame)
 
-
+#(498,593) = x coord range for finish line
+#325 = y value of the finish line
 #-------------------
     #Start in perspective view w/spinning camera
     app.perspective = True
@@ -32,7 +33,7 @@ def onAppStart(app):
     app.fov = 60
 
     #Car position
-    app.x, app.y = app.width/2, app.height/2-30
+    app.x, app.y = 533, 345
     app.angle = 0
 
     #Camera position
@@ -40,7 +41,7 @@ def onAppStart(app):
 
     #We can't quite go this fast, but we can try
     app.stepsPerSecond = 10
-    app.barrierList = [(232,232,0),(0,0,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
+    app.barrierList = [(232,232,0),(0, 32, 248),(104,104,248),(232,0,0),(248,72,72),(0,128,0),(0,168,0),(0,208,0),(248,248,144),(96,248,96)]
     #Calculate the initial view
     makePerspective(app)
     
@@ -90,11 +91,11 @@ def onKeyPress(app,key):
 
     elif currPix not in app.barrierList:
         # Check if the new position would be on a barrier
-        if key == 'up':
+        if key == 's':
             new_pixel = app.map.getpixel((app.x, app.y + 5))
             if new_pixel not in app.barrierList:
                 app.y += 5
-        elif key == 'down':
+        elif key == 'w':
             new_pixel = app.map.getpixel((app.x, app.y - 5))
             if new_pixel not in app.barrierList:
                 app.y -= 5
@@ -118,8 +119,8 @@ def onStep(app):
             app.sign = -1
         else:
             app.sign = 1
-        print(f'This is your angle: {app.angle}')
-        print("You are on this color: ", app.map.getpixel((app.x,app.y)))
+        
+        
         # Update the position based on the mouse direction
         dx = 5 * math.cos(math.radians(app.angle))
         dy = 5 * math.sin(math.radians(app.angle))
@@ -129,7 +130,7 @@ def onStep(app):
             if new_pixel not in app.barrierList:
                 app.x += dx
                 app.y += dy
-    
+    print(f'This is your coord {app.x,app.y}')
     
 
     makePerspective(app)
@@ -155,7 +156,7 @@ def redrawAll(app):
 
     else:
         drawImage(CMUImage(app.map),0,0)
-        drawCircle(app.x, app.y, 10, fill='red')
+        drawCircle(app.x, app.y, 4, fill='red')
 
 def main():
     runApp(width=600, height=600)
