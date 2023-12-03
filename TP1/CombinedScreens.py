@@ -24,7 +24,7 @@ def onAppStart(app):
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 5 # Lower = better resolution, slower speed
+    app.scaleDown = 6 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
     #Start in perspective view w/spinning camera
@@ -183,7 +183,6 @@ def game_onKeyPress(app,key):
     makePerspective(app)
 
 def game_onStep(app):
-    
     if app.spin:
         app.angle += 5
     if app.gameStart == False:
@@ -224,7 +223,7 @@ def game_onStep(app):
             app.slow = False
             app.stepsPerSecond = app.speed
         
-        print(passedFinishLine(app,dy))
+        #print(passedFinishLine(app,dy))
 
     #print("You are on this color: ", app.map.getpixel((app.x,app.y)))
     
@@ -264,7 +263,6 @@ def select_redrawAll(app):
         drawLabel(app.message[(i+ app.shift) % len(app.message)],120 + 20*i,200,size = 20,bold = True,fill = 'yellow')
 
 def select_onStep(app):
-
     app.shift += 1
 
 def select_onKeyPress(app, key):

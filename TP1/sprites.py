@@ -1,10 +1,12 @@
 from cmu_graphics import *
-from PIL import Image
+from PIL import Image, ImageOps
 import os, pathlib
+
 
 def onAppStart(app):
     
     app.turningLeft = False
+    app.turningRight = False
     spritestrip = Image.open('sprites/mario-3.gif')
     
     app.currKeys = []
@@ -25,9 +27,17 @@ def onAppStart(app):
     app.stepsPerSecond = 50
 
 def onStep(app):
+    app.stepCounter += 1
     if app.turningLeft:
         while app.spriteCounter < 3:
-            app.spriteCounter += 1
+            if app.stepCounter % app.stepsPerSecond == 0:
+                app.spriteCounter += 1
+    else:
+        app.spriteCounter = 0
+    if app.turningRight:
+        while app.spriteCounter < 3:
+            if app.stepCounter % app.stepsPerSecond == 0:
+                app.spriteCounter += 1
     else:
         app.spriteCounter = 0
     print(app.currKeys)
@@ -37,15 +47,20 @@ def onKeyHold(app,keys):
     app.currKeys = keys
     if "left" in keys:
         app.turningLeft = True
+    if "right" in keys:
+        app.turningRight = True
 
 def onKeyRelease(app,keys):
-    app.currKeys = keys
     if 'left' in keys:
         app.turningLeft = False
+    if 'right' in keys:
+        app.turningRight = False
         
 
 def redrawAll(app):
     sprite = app.sprites[app.spriteCounter]
+    if app.turningRight:
+        sprite = ImageOps.mirror(sprite)
     drawImage(sprite,200, 200, align = 'center')
 
 def main():
