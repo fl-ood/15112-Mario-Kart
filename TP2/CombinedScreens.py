@@ -1,6 +1,7 @@
 from cmu_graphics import *
 from PIL import Image
 from PIL import ImageFilter
+import numpy
 import math
 import random
 import time
@@ -24,7 +25,7 @@ def onAppStart(app):
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 7 # Lower = better resolution, slower speed
+    app.scaleDown = 3 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
     #Start in perspective view w/spinning camera
@@ -121,31 +122,39 @@ def passedFinishLine(app,dy):
     
 #This function finds a pixel on the map along a line of sight
 def makePerspective(app):
-    #Scan left to right
-    
-    for x in range(app.view.width): 
-        yaw = (x/app.view.width) * app.fov - (app.fov/2)  #[-30, -29... 0 ... 29 30]
-        dxScale = math.cos((app.angle+yaw)*math.pi/180)
-        dyScale = math.sin((app.angle+yaw)*math.pi/180)
+    # Convert the image to a numpy array
+    mapPixels = numpy.array(app.map)
 
-        #Scan top to bottom
-        for y in range(app.view.height): 
-            pitch = (1 - y/app.view.height)*90
-            dist = app.cameraHeight * math.tan(pitch*math.pi/180)
-            
-            dx = dist*dxScale
-            dy = dist*dyScale
-            fx = app.x + dx # make other variable such as cam.x cam.y when drawing sprite
-            fy = app.y + dy
-            #fx = max(0, min(app.map.width-1, fx))
-            #fy = max(0, min(app.map.height-1, fy))
-            if 0 <= fx < app.map.width and 0 <= fy < app.map.height:
-                r,g,b = app.map.getpixel((fx,fy))
-                app.view.putpixel((x,y),(r,g,b))
-            else:
-                ## If we're looking off the map, just make the pixel blue
-                app.view.putpixel((x,y),(100,100,255))
-    # app.view = app.view.filter(ImageFilter.EMBOSS)
+    # meshgrid creates a grid of x and y coordinates with two even arrays using cartesian indexing
+    # will make an array of the all the points of the map 
+    x, y = numpy.meshgrid(numpy.arange(app.view.width), numpy.arange(app.view.height))
+
+    # yaw is the horizontal angle of the camera
+    yaw = (x / app.view.width) * app.fov - (app.fov / 2)
+    # pitch is the vertical angle of the camera
+    pitch = (1 - y / app.view.height) * 90
+
+    # Calculate distances and final x and y coordinates
+    dist = app.cameraHeight * numpy.tan(pitch * numpy.pi / 180)
+    dx = dist * numpy.cos((app.angle + yaw) * numpy.pi / 180)
+    dy = dist * numpy.sin((app.angle + yaw) * numpy.pi / 180)
+    fx = (app.x + dx).astype(int)
+    fy = (app.y + dy).astype(int)
+
+    # Create a mask of valid coordinates
+    # a mask contians all the values in an array based on a certain condition
+    # this mask filters out the invalid coords from the fx and fy arrays
+    mask = (0 <= fx) & (fx < app.map.width) & (0 <= fy) & (fy < app.map.height)
+
+    # Use the mask to index into the original image array
+    viewPixels = numpy.zeros((app.view.height, app.view.width, 3), dtype=int)
+    viewPixels[mask] = mapPixels[fy[mask], fx[mask]]
+
+    # Handle off-map pixels by making them blue
+    viewPixels[~mask] = [100, 100, 255]
+
+    # Convert pixels to an image
+    app.view = Image.fromarray(viewPixels.astype('uint8'), 'RGB')
 
 def game_onKeyHold(app,keys):
     app.currKeys = keys
