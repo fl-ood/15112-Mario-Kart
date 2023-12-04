@@ -4,6 +4,8 @@ from PIL import ImageFilter
 import math
 import random
 import time
+from sprites import Sprite
+
 
 ###DIRECTIONS:
 # When app starts, UI hasnt been fully scaled/configured yet so press space twice
@@ -22,7 +24,7 @@ def onAppStart(app):
     app.map = app.map.convert('RGB')
 
     #Make a new image with a scaled down resolution
-    app.scaleDown = 6 # Lower = better resolution, slower speed
+    app.scaleDown = 7 # Lower = better resolution, slower speed
     app.view = Image.new(mode='RGB', size=(app.width//app.scaleDown, app.height//app.scaleDown))
     
     #Start in perspective view w/spinning camera
@@ -78,14 +80,13 @@ def onAppStart(app):
     app.highlight100 = 'white'
 
 #--Sprite Stuff--------------------------------------------------
-    app.sprite = Image.open('sprites/mario-3solo.png') # sprites come from The Spriters Resource
-    app.w,app.h = app.sprite.size
-    app.unit = app.w
-
-    frame = app.sprite.crop((app.unit,0, app.unit, app.h))
-    app.sprite = CMUImage(frame)
-
-
+    app.mario = Sprite('sprites/mario-3.gif',app.width//4,app.height//4) # sprites come from The Spriters Resource
+    
+    app.turningLeft = False
+    app.turningRight = False
+    app.spriteCounter = 0
+    app.stepCounter = 0
+    
 #--Game---------------------------------------------
 
 # starts the race after a full spin
@@ -146,38 +147,27 @@ def makePerspective(app):
                 app.view.putpixel((x,y),(100,100,255))
     # app.view = app.view.filter(ImageFilter.EMBOSS)
 
+def game_onKeyHold(app,keys):
+    app.currKeys = keys
+    if "left" in keys:
+        app.turningLeft = True
+    if "right" in keys:
+        app.turningRight = True
+
+def game_onKeyRelease(app,keys):
+    if 'left' in keys:
+        app.turningLeft = False
+    if 'right' in keys:
+        app.turningRight = False
+    
 
 def game_onKeyPress(app,key):
     currPix = app.map.getpixel((app.x,app.y))
     if key == 'p': #p draws the map
         app.perspective = not app.perspective
-    elif key == 'left': #left and right change the angle
-        app.angle -= 5
-    elif key == 'right':
-        app.angle += 5
     elif key == '1':
         app.gameStart = not app.gameStart
-    
-    
 
-    elif currPix not in app.barrierList:
-        # Check if the new position would be on a barrier
-        if key == 's':
-            new_pixel = app.map.getpixel((app.x, app.y + 5))
-            if new_pixel not in app.barrierList:
-                app.y += 5
-        elif key == 'w':
-            new_pixel = app.map.getpixel((app.x, app.y - 5))
-            if new_pixel not in app.barrierList:
-                app.y -= 5
-        elif key == 'a':
-            new_pixel = app.map.getpixel((app.x - 5, app.y))
-            if new_pixel not in app.barrierList:
-                app.x -= 5
-        elif key == 'd':
-            new_pixel = app.map.getpixel((app.x + 5, app.y))
-            if new_pixel not in app.barrierList:
-                app.x += 5
     makePerspective(app)
 
 def game_onStep(app):
@@ -191,8 +181,7 @@ def game_onStep(app):
 
     if app.endgame:
         app.gameStart = False
-
-
+        
     # to convert decimal places
     # def convert(x,decplaces):
     #x *= 10**decimalplaces
@@ -220,16 +209,28 @@ def game_onStep(app):
         elif currPix == (96,96,96):
             app.slow = False
             app.stepsPerSecond = app.speed
-        
-        #print(passedFinishLine(app,dy))
+
+        if app.turningLeft:
+            app.angle -= 10
+            while app.spriteCounter < 3:
+                # if app.stepCounter % app.stepsPerSecond == 0: this line cause program to crash for some reason?
+                app.spriteCounter += 1
+        elif app.turningRight:
+            app.angle += 10
+            while app.spriteCounter < 3:
+                # if app.stepCounter % app.stepsPerSecond == 0:
+                app.spriteCounter += 1
+        else:
+            app.spriteCounter = 0
+        passedFinishLine(app,dy)
 
     #print("You are on this color: ", app.map.getpixel((app.x,app.y)))
     
     makePerspective(app)
 
-def game_onMouseMove(app,mouseX,mouseY):
-    if app.gameStart:
-        app.angle = mouseX
+# def game_onMouseMove(app,mouseX,mouseY):
+#     if app.gameStart:
+#         app.angle = mouseX
         
     
 
@@ -241,13 +242,19 @@ def game_redrawAll(app):
         resizedView = app.view.resize((app.width,app.height))
         #drawImage(CMUImage(app.image2),0,0, width = app.width, height = app.height)
         drawImage(CMUImage(resizedView),0,0)
-        drawLabel(app.lap,300,70,size = 40,bold = True)
-        drawLabel(app.laptime,300,20,size = 40,bold = True)
+        drawLabel(app.lap,app.width//2,70,size = 40,bold = True)
+        drawLabel(app.laptime,app.width//2,20,size = 40,bold = True)
+
+        if app.turningLeft:
+            app.mario.draw(app.width//2, app.height//2, app.spriteCounter)
+        else:
+            app.mario.draw(app.width//2, app.height//2, 0)
+        
         if app.gameStart == False and app.count != 0 and not app.endgame:
             drawLabel(app.count,300,300,size = 40,bold = True)
         if app.endgame:
-            drawLabel("YOU WON",300,300,size = 40,bold = True)
-            drawLabel(f"Your laptime: {app.laptime}",300,350,size = 40,bold = True)
+            drawLabel("YOU WON",app.width//2,app.height//2,size = 40,bold = True)
+            drawLabel(f"Your laptime: {app.laptime}",app.width//2,app.height//2 + 50,size = 40,bold = True)
     else:
         drawImage(CMUImage(app.map),0,0)
         drawCircle(app.x, app.y, 10, fill='red')

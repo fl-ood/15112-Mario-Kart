@@ -3,6 +3,9 @@ from PIL import Image, ImageOps
 import os, pathlib
 
 
+
+
+
 def onAppStart(app):
     
     app.turningLeft = False
@@ -30,20 +33,17 @@ def onStep(app):
     app.stepCounter += 1
     if app.turningLeft:
         while app.spriteCounter < 3:
-            if app.stepCounter % app.stepsPerSecond == 0:
-                app.spriteCounter += 1
-    else:
-        app.spriteCounter = 0
-    if app.turningRight:
+            # if app.stepCounter % app.stepsPerSecond == 0: this line cause program to crash for some reason?
+            app.spriteCounter += 1
+    elif app.turningRight:
         while app.spriteCounter < 3:
-            if app.stepCounter % app.stepsPerSecond == 0:
-                app.spriteCounter += 1
+            # if app.stepCounter % app.stepsPerSecond == 0:
+            app.spriteCounter += 1
     else:
         app.spriteCounter = 0
     print(app.currKeys)
 
 def onKeyHold(app,keys):
-    #print(keys)
     app.currKeys = keys
     if "left" in keys:
         app.turningLeft = True
