@@ -3,9 +3,6 @@ from PIL import Image, ImageOps
 import os, pathlib
 
 
-
-
-
 def onAppStart(app):
     
     app.turningLeft = False

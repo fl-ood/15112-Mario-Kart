@@ -138,8 +138,11 @@ def makePerspective(app):
     dist = app.cameraHeight * numpy.tan(pitch * numpy.pi / 180)
     dx = dist * numpy.cos((app.angle + yaw) * numpy.pi / 180)
     dy = dist * numpy.sin((app.angle + yaw) * numpy.pi / 180)
-    fx = (app.x + dx).astype(int)
-    fy = (app.y + dy).astype(int)
+    app.cx = app.x - 5 * dx
+    app.cy = app.y - 5 * dy
+
+    fx = (app.cx + dx).astype(int)
+    fy = (app.cy + dy).astype(int)
 
     # Create a mask of valid coordinates
     # a mask contians all the values in an array based on a certain condition
@@ -151,6 +154,7 @@ def makePerspective(app):
     viewPixels[mask] = mapPixels[fy[mask], fx[mask]]
 
     # Handle off-map pixels by making them blue
+    # the ~ basically reverses the mask so that it will filter out the invalid coords
     viewPixels[~mask] = [100, 100, 255]
 
     # Convert pixels to an image
@@ -212,8 +216,8 @@ def game_onStep(app):
         if currPix in app.slowTerrain:
             app.slow = True
             if app.slow:
-                newSpeed = app.speed // 2
-                app.stepsPerSecond = newSpeed
+                app.x -= dx // 2
+                app.y -= dy // 2
         # if it is back in the grey terrain return speed to normal
         elif currPix == (96,96,96):
             app.slow = False
