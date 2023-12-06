@@ -69,7 +69,7 @@ def onAppStart(app):
     app.message = "Choose your driver.... "
     app.paused = True
     app.countdown = False
-    app.firstp = Image.open('images/firstplayer.png')
+    app.firstp = Image.open('images/1stp.png')
     app.firstpx = 111
     app.firstpy = 158
 #--Title Screen---------------------------------------------
@@ -237,6 +237,11 @@ def game_onStep(app):
     
     makePerspective(app)
 
+# def game_onMouseMove(app,mouseX,mouseY):
+#     if app.gameStart:
+#         app.angle = mouseX
+        
+    
 
 def game_redrawAll(app):
     if app.perspective:
@@ -244,18 +249,19 @@ def game_redrawAll(app):
         ## Unsure whether resizing with pil or cmuImage is faster
 
         resizedView = app.view.resize((app.width,app.height))
+        #drawImage(CMUImage(app.image2),0,0, width = app.width, height = app.height)
         drawImage(CMUImage(resizedView),0,0)
         drawLabel(app.lap,app.width//2,70,size = 40,bold = True)
         drawLabel(app.laptime,app.width//2,20,size = 40,bold = True)
 
         if app.turningLeft:
-            app.player.draw(app.width//2, app.height//2, app.spriteCounter)
+            app.mario.draw(app.width//2, app.height//2, app.spriteCounter)
         elif app.turningRight:
-            app.player.drawMirror(app.width//2, app.height//2, app.spriteCounter)
+            app.mario.draw(app.width//2, app.height//2, app.spriteCounter)
         elif app.endgame:
-            app.player.draw(app.width//2,app.height//2,8)
+            app.mario.draw(app.width//2,app.height//2,8)
         else:
-            app.player.draw(app.width//2, app.height//2, app.player.neutralFrame)
+            app.mario.draw(app.width//2, app.height//2, 0)
         
         if app.gameStart == False and app.count != 0 and not app.endgame:
             drawLabel(app.count,300,300,size = 40,bold = True)
@@ -293,9 +299,15 @@ def select_onKeyPress(app, key):
     elif key == 'down':
         if app.firstpy < 316:
             app.firstpy += 162
-
-def select_onMouseMove(app,mouseX,mouseY):
-    pass
+    elif key == 'return':
+        if app.confirm != Image.open('images/1stpok?.png'):
+            app.confirm = Image.open('images/1stpok?.png')
+        else:
+            Image.open('images/1stpok.png')
+            for i in range(3):
+                pass
+                #add sprite counter here
+            setActiveScreen('game')
 
 #--Title Screen--------------------------------------------
 

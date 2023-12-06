@@ -52,7 +52,6 @@ def onAppStart(app):
     app.slowTerrain = [(176, 160, 112),(144, 128, 88),(160, 144, 96)]
     #Calculate the initial view
     makePerspective(app)
-
 #--Game Screen-------------------------------------------------
     app.gameStart = False
     app.lap = -1
@@ -64,6 +63,7 @@ def onAppStart(app):
     app.movingBack = False
     app.tzero = 0
     app.counter = 0
+    app.spriteCount = 0
 #--Selection Screen-------------------------------------------------
     app.select = Image.open('images/selectscreen.png') # title screen image is from google https://tcrf.net/images/8/8c/Smk_title_bg_us.png
     app.shift = 0
@@ -200,9 +200,9 @@ def game_onStep(app):
         app.endgame = True
 
     if app.endgame:
-        app.stepsPerSecond = 50
+        app.stepsPerSecond = 150
         app.stepCounter += 1
-        if app.stepCounter >= 9:
+        if app.stepCounter >= app.spriteCount:
             app.spriteCounter = (1 + app.spriteCounter) % len(app.player.winFrames)
             app.stepCounter = 0 
         app.gameStart = False
@@ -223,10 +223,9 @@ def game_onStep(app):
             dx,dy = 0,0
         # checks the  current pixel to see if it is in the list of barriers 
         currPix = app.map.getpixel((app.x,app.y))
-        print(app.x, app.y)
         if currPix not in app.barrierList:
             # rechecks the pixel with the added movement to make sure it is legal in order to avoid image crashes
-            new_pixel = app.map.getpixel((app.x + dx , app.y + dy))
+            new_pixel = app.map.getpixel((app.x + dx +10 , app.y + dy + 10))
             if new_pixel not in app.barrierList:
                 app.x += dx 
                 app.y += dy 
@@ -239,8 +238,6 @@ def game_onStep(app):
         # if it is back in the grey terrain return speed to normal
         elif currPix == (96,96,96):
             app.slow = False
-            
-
         if app.turningLeft:
             app.angle -= 10
             while app.spriteCounter < app.player.turningFrames:
@@ -285,7 +282,7 @@ def game_redrawAll(app):
             drawLabel(app.count,300,300,size = 40,bold = True)
         if app.endgame:
             drawLabel("YOU WON",app.width//2,app.height//2 - 120,size = 40,bold = True)
-            drawLabel(f"Your laptime: {app.laptime}",app.width//2,app.height//2 + 120,size = 30,bold = True)
+            drawLabel(f"Your laptime: {int(app.laptime)}",app.width//2,app.height//2 + 120,size = 30,bold = True)
     
 
 #--Selection Screen--------------------------------------------
@@ -308,9 +305,11 @@ def select_onStep(app):
     
 def updateCharacter(app):
     app.player = Sprite(app.character,app.width//4,app.height//4)
+    app.spriteCount = app.player.getWinSpriteCount(app.character)
 
-def select_onKeyPress(app, key):
-    t0 = time.time()
+
+    
+def select_onKeyPress(app,key):
     if key == 'space':
         setActiveScreen('game')
     elif key == 'left':
@@ -326,7 +325,6 @@ def select_onKeyPress(app, key):
         if app.firstpy < 316:
             app.firstpy += 162
     elif key == 'enter':
-        t1 = time.time()
         app.confirm += 1
         if app.confirm == 2:
             if app.fiftycc:
@@ -334,6 +332,13 @@ def select_onKeyPress(app, key):
             elif app.hundredcc:
                 app.stepsPerSecond = 20
             setActiveScreen('game')
+    elif key == 'k':
+        if app.fiftycc:
+            app.stepsPerSecond = 10
+        elif app.hundredcc:
+            app.stepsPerSecond = 20
+        app.player = Sprite('kirby',app.width//4,app.height//4)
+        setActiveScreen('game')
     elif key == 'backspace':
         if app.confirm != 0:
             app.confirm -= 1
@@ -350,116 +355,53 @@ def select_onKeyPress(app, key):
         
         
 def chooseCharacter(app):
+    characterPositions = {
+        (111, 158): 'mario',
+        (223, 158): 'luigi',
+        (335, 158): 'peach',
+        (447, 158): 'toad',
+        (111, 320): 'yoshi',
+        (223, 320): 'bowser',
+        (335, 320): 'dk',
+        (447, 320): 'koopa'
+    }
+    
+    selectedPosition = (app.firstpx, app.firstpy)
+    app.character = characterPositions[selectedPosition]
     updateCharacter(app)
-    if app.firstpx == 111 and app.firstpy == 158:
-        app.character = 'mario'
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 223 and app.firstpy == 158:
-        app.character = 'luigi'
-        
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 335 and app.firstpy == 158:
-        app.character = 'peach'
-        
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 447 and app.firstpy == 158:
-        app.character = 'toad'
-        
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 111 and app.firstpy == 320:
-        app.character = 'yoshi'
-        
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 223 and app.firstpy == 320:
-        app.character = 'bowser'
-        
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 335 and app.firstpy == 320:
-        app.character = 'dk'
-        
-        playSelectAnimation(app,app.player)
-    elif app.firstpx == 447 and app.firstpy == 320:
-        app.character = 'koopa'
-        playSelectAnimation(app,app.player)
+    playSelectAnimation(app,app.player)
 
 # draws all the animations on the select screen (warning lengthy function)
 def drawSprites(app):
-    if app.character == 'koopa':
-        app.characters['koopa'].drawWin(132 + 115*3,400,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-    elif app.character == 'mario':
-        app.characters['mario'].drawWin(132,235,app.spriteCounter)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
-    elif app.character == 'luigi':
-        app.characters['luigi'].drawWin(132 + 115,235,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
-    elif app.character == 'peach':
-        app.characters['peach'].drawWin(132 + 115*2,235,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
-    elif app.character == 'toad':
-        app.characters['toad'].drawWin(132 + 115*3,235,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
-    elif app.character == 'yoshi':
-        app.characters['yoshi'].drawWin(132,400,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
-    elif app.character == 'bowser':
-        app.characters['bowser'].drawWin(132 + 115,400,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['dk'].draw(132 + 115*2,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
-    elif app.character == 'dk':
-        app.characters['dk'].drawWin(132 + 115*2,400,app.spriteCounter)
-        app.characters['mario'].draw(132,235,0)
-        app.characters['luigi'].draw(132 + 115,235,0)
-        app.characters['peach'].draw(132 + 115*2,235,0)
-        app.characters['toad'].draw(132 + 115*3,235,0)
-        app.characters['yoshi'].draw(132,400,0)
-        app.characters['bowser'].draw(132 + 115,400,0)
-        app.characters['koopa'].draw(132 + 115*3,400,0)
+    characterPositions = {
+                'mario': (132, 235),
+                'luigi': (132 + 115, 235),
+                'peach': (132 + 115 * 2, 235),
+                'toad': (132 + 115 * 3, 235),
+                'yoshi': (132, 400),
+                'bowser': (132 + 115, 400),
+                'dk': (132 + 115 * 2, 400),
+                'koopa': (132 + 115 * 3, 400)
+            }
+            
+    selectedCharacter = app.character
+    selectedPosition = characterPositions[selectedCharacter]
+    # . items python method
+    for character, position in characterPositions.items():
+        if character == selectedCharacter:
+            if app.spriteCounter < len(app.characters[character].winFrames):
+                app.characters[character].drawWin(position[0], position[1], app.spriteCounter)
+            else:
+                app.characters[character].drawWin(position[0], position[1], 0)
+        else:
+            app.characters[character].draw(position[0], position[1], 0)
 
 def playSelectAnimation(app, character):
-    if app.stepCounter >= 9:
+    if character == 'toad' and app.spriteCounter > app.spriteCount:
+        app.spriteCounter = 0
+    elif app.stepCounter >= app.spriteCount:
         app.spriteCounter = (1 + app.spriteCounter) % len(character.winFrames)
+    
         app.stepCounter = 0 
 
 def select_onMouseMove(app,mouseX,mouseY):

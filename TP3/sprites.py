@@ -9,11 +9,11 @@ players = {'mario':'sprites/mario.gif',
            'bowser':'sprites/bowser.gif','dk':'sprites/dk.gif',
            'koopa':'sprites/koopa.gif','kirby':'sprites/kirby.gif'}
 
-spriteCount = {'mario':9,'luigi':10,'peach':4,'toad':8,'yoshi':6,'bowser':10,'dk':8,'koopa':6,'kirby':12}
+spriteCount = {'mario':9,'luigi':10,'peach':4,'toad':8,'yoshi':6,'bowser':10,'dk':8,'koopa':6,'kirby':13}
 turningFrames = {'mario':3,'luigi':2,'peach':3,'toad':3,'yoshi':3,'bowser':3,'dk':2,'koopa':3,'kirby':4}
 reverse = {'mario':False,'luigi':False,'peach':False,'toad':True,'yoshi':True,'bowser':False,'dk':False,'koopa':True,'kirby':True}
 winSprites = {'mario':'win/mariowin.gif','luigi':'win/luigiwin.gif','peach':'win/peachwin.gif','toad':'win/toadwin.gif','yoshi':'win/yoshiwin.gif','bowser':'win/bowserwin.gif','dk':'win/dkwin.gif','koopa':'win/koopawin.gif','kirby':'win/kirbywin.gif'}
-winSpriteCount = {'mario':9,'luigi':10,'peach':10,'toad':4,'yoshi':12,'bowser':10,'dk':8,'koopa':8,'kirby':12}
+winSpriteCount = {'mario':9,'luigi':10,'peach':10,'toad':4,'yoshi':12,'bowser':10,'dk':8,'koopa':8,'kirby':13}
 
 class Sprite():
     
@@ -23,12 +23,13 @@ class Sprite():
         self.winStrip = Image.open(winSprites[character])
         self.frames = []
         self.winFrames = []
+        self.winSpriteCount = winSpriteCount[character]
         self.neutralFrame = 0
         self.turningFrames = turningFrames[character]
         self.reverse = reverse[character]
         
         w,h = self.spriteStrip.size
-        unit = w//spriteCount[character]
+        unit = w/spriteCount[character]
 
         for i in range(spriteCount[character]):
             # Split up the spritestrip into its separate sprites
@@ -38,7 +39,7 @@ class Sprite():
             self.frames.append(resizeframe)
         
         winW,winH = self.winStrip.size
-        winUnit = winW//winSpriteCount[character]
+        winUnit = winW/winSpriteCount[character]
 
         for i in range(winSpriteCount[character]):
             # Split up the spritestrip into its separate sprites
@@ -46,6 +47,9 @@ class Sprite():
             frame = self.winStrip.crop((winUnit*i,0, winUnit*(i+1), winH))
             resizeframe = frame.resize((sx,sy))
             self.winFrames.append(resizeframe)
+
+    def getWinSpriteCount(self,character):
+        return winSpriteCount[character]
 
     def draw(self,x,y,frame):
         sprite = self.frames[frame]
