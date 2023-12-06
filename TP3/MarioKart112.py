@@ -66,6 +66,8 @@ def onAppStart(app):
     app.paused = True
     app.countdown = False
     app.firstp = Image.open('images/firstplayer.png')
+    app.firstpok = Image.open('images/firstplayerok.png')
+    app.firstplayerokconfirm = Image.open('images/firstplayerokconfirm.png')
     app.firstpx = 111
     app.firstpy = 158
     app.confirm = 0
@@ -286,6 +288,10 @@ def select_redrawAll(app):
     drawImage(CMUImage(app.firstp),app.firstpx,app.firstpy,width = 40, height = 20)
     # draws the driver selection text in a scrolling fashion (used scrolling carpe diems from CS Academy)
     drawSprites(app)
+    if app.confirm == 1:
+        drawImage(CMUImage(app.firstpok),355,480,width = 80, height = 25)
+    elif app.confirm == 2:
+        drawImage(CMUImage(app.firstplayerokconfirm),355,480,width = 80, height = 25)
     for i in range(11):
         drawLabel(app.message[(i+ app.shift) % len(app.message)],(195 + 20*i),80,size = 20,bold = True,fill = 'yellow')
 
@@ -305,16 +311,16 @@ def updateCharacter(app):
 def select_onKeyPress(app,key):
     if key == 'space':
         setActiveScreen('game')
-    elif key == 'left':
+    elif key == 'left' and app.confirm != 1:
         if app.firstpx > 111:
             app.firstpx -= 112
-    elif key == 'right':
+    elif key == 'right' and app.confirm != 1:
         if app.firstpx < 447:
             app.firstpx += 112
-    elif key == 'up':
+    elif key == 'up' and app.confirm != 1:
         if app.firstpy > 158:
             app.firstpy -= 162
-    elif key == 'down':
+    elif key == 'down' and app.confirm != 1:
         if app.firstpy < 316:
             app.firstpy += 162
     elif key == 'enter':
