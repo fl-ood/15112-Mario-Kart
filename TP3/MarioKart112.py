@@ -7,12 +7,6 @@ import random
 import time
 from sprites import Sprite
 
-
-###DIRECTIONS:
-# When app starts, UI hasnt been fully scaled/configured yet so press space twice
-# When on the track the map will do a 360 then wait 3 seconds and the game will start, you move with your mouse and must cross the finsih line forward 3 times to win
-
-
 def onAppStart(app):
 
     app.width = 600
@@ -200,7 +194,8 @@ def game_onStep(app):
         app.endgame = True
 
     if app.endgame:
-        app.stepsPerSecond = 150
+        app.stepsPerSecond = 50
+        print(app.spriteCounter)
         app.stepCounter += 1
         if app.stepCounter >= app.spriteCount:
             app.spriteCounter = (1 + app.spriteCounter) % len(app.player.winFrames)
@@ -277,12 +272,10 @@ def game_redrawAll(app):
             app.player.drawWin(app.width//2,app.height//2,app.spriteCounter)
         else:
             app.player.draw(app.width//2, app.height//2, app.player.neutralFrame)
-        
-        if app.gameStart == False and app.count != 0 and not app.endgame:
-            drawLabel(app.count,300,300,size = 40,bold = True)
         if app.endgame:
             drawLabel("YOU WON",app.width//2,app.height//2 - 120,size = 40,bold = True)
             drawLabel(f"Your laptime: {int(app.laptime)}",app.width//2,app.height//2 + 120,size = 30,bold = True)
+            
     
 
 #--Selection Screen--------------------------------------------
@@ -331,6 +324,7 @@ def select_onKeyPress(app,key):
                 app.stepsPerSecond = 10
             elif app.hundredcc:
                 app.stepsPerSecond = 20
+            app.stepCounter = 0
             setActiveScreen('game')
     elif key == 'k':
         if app.fiftycc:
@@ -338,6 +332,7 @@ def select_onKeyPress(app,key):
         elif app.hundredcc:
             app.stepsPerSecond = 20
         app.player = Sprite('kirby',app.width//4,app.height//4)
+        app.stepCounter = 0
         setActiveScreen('game')
     elif key == 'backspace':
         if app.confirm != 0:
@@ -397,11 +392,8 @@ def drawSprites(app):
             app.characters[character].draw(position[0], position[1], 0)
 
 def playSelectAnimation(app, character):
-    if character == 'toad' and app.spriteCounter > app.spriteCount:
-        app.spriteCounter = 0
-    elif app.stepCounter >= app.spriteCount:
+    if app.stepCounter >= app.spriteCount:
         app.spriteCounter = (1 + app.spriteCounter) % len(character.winFrames)
-    
         app.stepCounter = 0 
 
 def select_onMouseMove(app,mouseX,mouseY):
@@ -464,3 +456,5 @@ def title_onMouseMove(app,mouseX,mouseY):
 
 # Your screen names should be strings
 runAppWithScreens(initialScreen='title')
+
+
