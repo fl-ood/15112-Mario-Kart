@@ -8,6 +8,7 @@ I achieved a mode 7 like transformation using PIL and numPy to mimick the look o
 
 How to run:
 - Make sure you have all assests (images and sprites) that are in images and sprites folders shared in the deliverable. The python file should be in the same folder/directory as the images and sprites folders, not inside either of the folders. This also applies to sprites.py which is the sprites class I created
+  
 You will also need these libraries to run the code:
 - cmu_graphics
 - PIL
