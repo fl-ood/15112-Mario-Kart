@@ -1,17 +1,19 @@
 from cmu_graphics import *
 from PIL import Image, ImageOps
 import os, pathlib
+from PIL import ImageOps
 
-players = {'mario':'sprites/mario-3.gif','luigi':1,'peach':1,'toad':1,'yoshi':1,'bowser':1,'dk':1,'wario':1}
-
+players = {'mario':'sprites/mario.gif','luigi':'luigi.png','peach':1,'toad':1,'yoshi':1,'bowser':1,'dk':1,'wario':1}
+neutralFrame = {'mario':0,'luigi':0,'peach':1,'toad':1,'yoshi':1,'bowser':1,'dk':1,'wario':1}
 class Sprite():
     
     def __init__(self,character,sx,sy):
 
-
         self.spriteStrip = Image.open(players[character])
         self.frames = []
-        
+        self.neutralFrame = neutralFrame[character]
+
+
         w,h = self.spriteStrip.size
         unit = w//9
         for i in range(9):
@@ -19,8 +21,16 @@ class Sprite():
             # then save them in a list
             frame = self.spriteStrip.crop((unit*i,0, unit*(i+1), h))
             resizeframe = frame.resize((sx,sy))
-            sprite = CMUImage(resizeframe)
-            self.frames.append(sprite)
+            self.frames.append(resizeframe)
+
+
+
+    def drawMirror(self, x, y, frame):
+        sprite = self.frames[frame]
+        mirrored_sprite = ImageOps.mirror(sprite)
+        mirrored_sprite = CMUImage(mirrored_sprite)  # Convert to CMUImage
+        drawImage(mirrored_sprite, x, y, align='center')
+
 
     def chooseCharacter(self):
         if self.px == 111 and self.py == 158:
@@ -43,5 +53,7 @@ class Sprite():
 
     def draw(self,x,y,frame):
         sprite = self.frames[frame]
+        sprite = CMUImage(sprite)
         drawImage(sprite,x,y,align = 'center')
+
 

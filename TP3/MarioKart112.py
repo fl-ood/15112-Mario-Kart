@@ -41,9 +41,8 @@ def onAppStart(app):
     app.cameraHeight = 20
 
     #We can't quite go this fast, but we can try
-    app.select_stepsPerSecond = 30
-    app.stepsPerSecond = 10
-    app.speed = 10
+    app.stepsPerSecond = 30
+    app.speed = 1
     # list of the rgb values on the edges of the map 
     app.barrierList = [(232,232,0),(152,152,0),(0, 32, 248),
                        (104,104,248),(232,0,0),(248,72,72),(0,128,0),
@@ -56,12 +55,15 @@ def onAppStart(app):
 
 #--Game Screen-------------------------------------------------
     app.gameStart = False
-    app.lap = 0
+    app.lap = -1
     app.laptime = 0
     app.go = False
     app.count = 0
     app.endgame = False
-    
+    app.moving = False
+    app.movingBack = False
+    app.tzero = 0
+    app.counter = 0
 #--Selection Screen-------------------------------------------------
     app.select = Image.open('images/selectscreen.png') # title screen image is from google https://tcrf.net/images/8/8c/Smk_title_bg_us.png
     app.shift = 0
@@ -72,6 +74,8 @@ def onAppStart(app):
     app.firstp = Image.open('images/firstplayer.png')
     app.firstpx = 111
     app.firstpy = 158
+    app.confirm = 0
+
 #--Title Screen---------------------------------------------
     app.titlescreen = Image.open('images/title.png')
     app.start = False
@@ -88,39 +92,44 @@ def onAppStart(app):
     app.turningRight = False
     app.spriteCounter = 0
     app.stepCounter = 0
+    app.characters = {'mario':Sprite('mario',70,70),
+                      'luigi':Sprite('luigi',70,70),
+                      'peach':Sprite('peach',70,70),
+                      'toad':Sprite('toad',70,70),
+                      'yoshi':Sprite('yoshi',70,70),
+                      'bowser':Sprite('bowser',70,70),
+                      'dk':Sprite('dk',70,70),
+                      'koopa':Sprite('koopa',70,70),
+                      'kirby':Sprite('kirby',70,70)}
     
+
 #--Game---------------------------------------------
 
 # starts the race after a full spin
 def startRace(app):
     if app.angle == 275 and not app.gameStart:
+        app.tzero = time.time()
         app.spin = False
         app.countdown = True
         for i in range(3,0,-1):
             app.count = i
             time.sleep(1)
         app.count = 'GO'
-        time.sleep(0.5)
         app.gameStart = True
 
 
-
-def passedFinishLine(app,dy):
+#(498,593) = x coord range for finish line
+#325 = y value of the finish line
+def passedFinishLine(app, dy):
     if 498 <= app.x <= 593:
         movement = app.y + dy
-        print(movement)
 
         if 323 < app.y < 328:
-            if movement > 325:
+            if movement > 325 and dy > 0:  # Check if moving forward
                 return False
             else:
                 app.lap += 1
                 
-    print(app.lap)
-#(498,593) = x coord range for finish line
-#325 = y value of the finish line
-
-    
 #This function finds a pixel on the map along a line of sight
 def makePerspective(app):
     # Convert the image to a numpy array
@@ -160,25 +169,25 @@ def makePerspective(app):
 
 def game_onKeyHold(app,keys):
     app.currKeys = keys
-    if "left" in keys:
+    if 'a' in keys:
         app.turningLeft = True
-    if "right" in keys:
+    if 'd' in keys:
         app.turningRight = True
+    if 'w' in keys:
+        app.moving = True
+    if 's' in keys:
+        app.movingBack = True
+    makePerspective(app)
 
 def game_onKeyRelease(app,keys):
-    if 'left' in keys:
+    if 'a' in keys:
         app.turningLeft = False
-    if 'right' in keys:
+    if 'd' in keys:
         app.turningRight = False
-    
-
-def game_onKeyPress(app,key):
-    currPix = app.map.getpixel((app.x,app.y))
-    if key == 'p': #p draws the map
-        app.perspective = not app.perspective
-    elif key == '1':
-        app.gameStart = not app.gameStart
-
+    if 'w' in keys:
+        app.moving = False
+    if 's' in keys:
+        app.movingBack = False
     makePerspective(app)
 
 def game_onStep(app):
@@ -191,25 +200,36 @@ def game_onStep(app):
         app.endgame = True
 
     if app.endgame:
+        app.stepsPerSecond = 50
+        app.stepCounter += 1
+        if app.stepCounter >= 9:
+            app.spriteCounter = (1 + app.spriteCounter) % len(app.player.winFrames)
+            app.stepCounter = 0 
         app.gameStart = False
         
-    # to convert decimal places
-    # def convert(x,decplaces):
-    #x *= 10**decimalplaces
 
     if app.gameStart:
-        app.laptime += 1/app.stepsPerSecond # use time.time()
+        app.counter += 1
+        t1 = time.time()
+        app.laptime = (t1 - app.tzero) - 3  # use time.time()
         # Update the position based on the mouse direction
-        dx = 5 * math.cos(math.radians(app.angle))
-        dy = 5 * math.sin(math.radians(app.angle))
+        if app.moving:
+            dx = 5 * math.cos(math.radians(app.angle))
+            dy = 5 * math.sin(math.radians(app.angle))
+        elif app.movingBack:
+            dx = -5 * math.cos(math.radians(app.angle))
+            dy = -5 * math.sin(math.radians(app.angle))
+        else:
+            dx,dy = 0,0
         # checks the  current pixel to see if it is in the list of barriers 
         currPix = app.map.getpixel((app.x,app.y))
+        print(app.x, app.y)
         if currPix not in app.barrierList:
             # rechecks the pixel with the added movement to make sure it is legal in order to avoid image crashes
-            new_pixel = app.map.getpixel((app.x + dx, app.y + dy))
+            new_pixel = app.map.getpixel((app.x + dx , app.y + dy))
             if new_pixel not in app.barrierList:
-                app.x += dx
-                app.y += dy
+                app.x += dx 
+                app.y += dy 
         # slows down the speed when the camera/car is on the sandy terrain
         if currPix in app.slowTerrain:
             app.slow = True
@@ -219,21 +239,19 @@ def game_onStep(app):
         # if it is back in the grey terrain return speed to normal
         elif currPix == (96,96,96):
             app.slow = False
-            app.stepsPerSecond = app.speed
+            
 
         if app.turningLeft:
             app.angle -= 10
-            while app.spriteCounter < 3:
+            while app.spriteCounter < app.player.turningFrames:
                 app.spriteCounter += 1
         elif app.turningRight:
             app.angle += 10
-            while app.spriteCounter < 3:
+            while app.spriteCounter < app.player.turningFrames:
                 app.spriteCounter += 1
         else:
             app.spriteCounter = 0
         passedFinishLine(app,dy)
-
-    #print("You are on this color: ", app.map.getpixel((app.x,app.y)))
     
     makePerspective(app)
 
@@ -246,14 +264,20 @@ def game_redrawAll(app):
         resizedView = app.view.resize((app.width,app.height))
         drawImage(CMUImage(resizedView),0,0)
         drawLabel(app.lap,app.width//2,70,size = 40,bold = True)
-        drawLabel(app.laptime,app.width//2,20,size = 40,bold = True)
+        drawLabel(int(app.laptime),app.width//2,20,size = 40,bold = True)
 
         if app.turningLeft:
-            app.player.draw(app.width//2, app.height//2, app.spriteCounter)
+            if app.player.reverse:
+                app.player.drawMirror(app.width//2, app.height//2, app.spriteCounter)
+            else:
+                app.player.draw(app.width//2, app.height//2, app.spriteCounter)
         elif app.turningRight:
-            app.player.drawMirror(app.width//2, app.height//2, app.spriteCounter)
+            if not app.player.reverse:
+                app.player.drawMirror(app.width//2, app.height//2, app.spriteCounter)
+            else:
+                app.player.draw(app.width//2, app.height//2, app.spriteCounter)
         elif app.endgame:
-            app.player.draw(app.width//2,app.height//2,8)
+            app.player.drawWin(app.width//2,app.height//2,app.spriteCounter)
         else:
             app.player.draw(app.width//2, app.height//2, app.player.neutralFrame)
         
@@ -262,23 +286,31 @@ def game_redrawAll(app):
         if app.endgame:
             drawLabel("YOU WON",app.width//2,app.height//2 - 120,size = 40,bold = True)
             drawLabel(f"Your laptime: {app.laptime}",app.width//2,app.height//2 + 120,size = 30,bold = True)
-    else:
-        drawImage(CMUImage(app.map),0,0)
-        drawCircle(app.x, app.y, 10, fill='red')
+    
 
 #--Selection Screen--------------------------------------------
+
 def select_redrawAll(app):
     resizedView = app.select.resize((app.width,app.height))
     drawImage(CMUImage(resizedView),0,0,width =app.width,height = app.height)
     drawImage(CMUImage(app.firstp),app.firstpx,app.firstpy,width = 40, height = 20)
     # draws the driver selection text in a scrolling fashion (used scrolling carpe diems from CS Academy)
+    drawSprites(app)
     for i in range(11):
         drawLabel(app.message[(i+ app.shift) % len(app.message)],(195 + 20*i),80,size = 20,bold = True,fill = 'yellow')
 
 def select_onStep(app):
     app.shift += 1
+    app.stepCounter += 1
+    chooseCharacter(app)
+    
+
+    
+def updateCharacter(app):
+    app.player = Sprite(app.character,app.width//4,app.height//4)
 
 def select_onKeyPress(app, key):
+    t0 = time.time()
     if key == 'space':
         setActiveScreen('game')
     elif key == 'left':
@@ -293,6 +325,142 @@ def select_onKeyPress(app, key):
     elif key == 'down':
         if app.firstpy < 316:
             app.firstpy += 162
+    elif key == 'enter':
+        t1 = time.time()
+        app.confirm += 1
+        if app.confirm == 2:
+            if app.fiftycc:
+                app.stepsPerSecond = 10
+            elif app.hundredcc:
+                app.stepsPerSecond = 20
+            setActiveScreen('game')
+    elif key == 'backspace':
+        if app.confirm != 0:
+            app.confirm -= 1
+    elif key == 1:
+        app.start = False
+        app.opacity = 0
+        app.fiftycc = False
+        app.hundredcc = False
+        app.highlight50 = 'white'
+        app.highlight100 = 'white'
+        app.firstpx = 111
+        app.firstpy = 158
+        setActiveScreen('title')
+        
+        
+def chooseCharacter(app):
+    updateCharacter(app)
+    if app.firstpx == 111 and app.firstpy == 158:
+        app.character = 'mario'
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 223 and app.firstpy == 158:
+        app.character = 'luigi'
+        
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 335 and app.firstpy == 158:
+        app.character = 'peach'
+        
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 447 and app.firstpy == 158:
+        app.character = 'toad'
+        
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 111 and app.firstpy == 320:
+        app.character = 'yoshi'
+        
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 223 and app.firstpy == 320:
+        app.character = 'bowser'
+        
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 335 and app.firstpy == 320:
+        app.character = 'dk'
+        
+        playSelectAnimation(app,app.player)
+    elif app.firstpx == 447 and app.firstpy == 320:
+        app.character = 'koopa'
+        playSelectAnimation(app,app.player)
+
+# draws all the animations on the select screen (warning lengthy function)
+def drawSprites(app):
+    if app.character == 'koopa':
+        app.characters['koopa'].drawWin(132 + 115*3,400,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+    elif app.character == 'mario':
+        app.characters['mario'].drawWin(132,235,app.spriteCounter)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+    elif app.character == 'luigi':
+        app.characters['luigi'].drawWin(132 + 115,235,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+    elif app.character == 'peach':
+        app.characters['peach'].drawWin(132 + 115*2,235,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+    elif app.character == 'toad':
+        app.characters['toad'].drawWin(132 + 115*3,235,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+    elif app.character == 'yoshi':
+        app.characters['yoshi'].drawWin(132,400,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+    elif app.character == 'bowser':
+        app.characters['bowser'].drawWin(132 + 115,400,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['dk'].draw(132 + 115*2,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+    elif app.character == 'dk':
+        app.characters['dk'].drawWin(132 + 115*2,400,app.spriteCounter)
+        app.characters['mario'].draw(132,235,0)
+        app.characters['luigi'].draw(132 + 115,235,0)
+        app.characters['peach'].draw(132 + 115*2,235,0)
+        app.characters['toad'].draw(132 + 115*3,235,0)
+        app.characters['yoshi'].draw(132,400,0)
+        app.characters['bowser'].draw(132 + 115,400,0)
+        app.characters['koopa'].draw(132 + 115*3,400,0)
+
+def playSelectAnimation(app, character):
+    if app.stepCounter >= 9:
+        app.spriteCounter = (1 + app.spriteCounter) % len(character.winFrames)
+        app.stepCounter = 0 
 
 def select_onMouseMove(app,mouseX,mouseY):
     pass
@@ -315,7 +483,7 @@ def title_redrawAll(app):
     
 
 def title_onStep(app):
-    # createa fading word effect on title screen 
+    # creates a fading word effect on title screen 
     if not app.start:
         app.opacity += 5
     
@@ -323,17 +491,19 @@ def title_onStep(app):
 def title_onKeyPress(app, key):
     if key == 'b':
         app.start = True 
+    if key =='space':
+        setActiveScreen('select')
 
 def title_onMousePress(app,mouseX,mouseY):
     # when clicking the buttons it will set it == to true which will determine the speed, you can't click both buttons
     if 275 < mouseX < 335 and app.start: 
         if 300 < mouseY < 330 and app.hundredcc != True:
             app.fiftycc = True
-            app.stepsPerSecond = 10
+            app.stepsPerSecond = 30
             setActiveScreen('select')
         if 330 < mouseY < 360 and app.fiftycc != True:
             app.hundredcc = True
-            app.stepsPerSecond = 15
+            app.stepsPerSecond = 30
             setActiveScreen('select')
 
 def title_onMouseMove(app,mouseX,mouseY):
