@@ -14,7 +14,7 @@ You will also need these libraries to run the code:
 -numPy
 
 Controls:
--On the title screen press 'b' as directed and then move your mouse to select which speed you would like(it will highlight when you hover over it) 50cc or 100cc
+- On the title screen press 'b' as directed and then move your mouse to select which speed you would like(it will highlight when you hover over it) 50cc or 100cc
 -Use "w", "a", "s", "d" to move forward, turn left, move backwars, turn right as you would in most games when on the track
 -Press space to skip between screens, title ---> select ----> game
 -Press '1' when at the select screen to go back to the title screen and change the speed
