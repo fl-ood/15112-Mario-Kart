@@ -21,7 +21,7 @@ Controls:
 - Press '1' when at the select screen to go back to the title screen and change the speed
 - When on the select screen, use the arrows to select your character and press return twice when you are sure of your character
 - If you are unsure of your character, press backspace, you change characters after pressing enter once if you do not press backspace
-- Press 'k' for a secret character ;)
+- Press 'k' for a secret character ;
 
 Bugs:
 - When selecting characters, toads sprite is special and random but it has only 4 images in the sprite sheet, so for some reason when switching quickly, if app.spriteCounter > 4 before you switch to toad, it will return an index error. This also happens on other characters like dk but it is less common since their spritesheets are bigger.

@@ -257,8 +257,8 @@ def game_redrawAll(app):
 
         resizedView = app.view.resize((app.width,app.height))
         drawImage(CMUImage(resizedView),0,0)
-        drawLabel(app.lap,app.width//2,70,size = 40,bold = True)
-        drawLabel(int(app.laptime),app.width//2,20,size = 40,bold = True)
+        drawLabel(f'Lap:{app.lap}',app.width//2,70,size = 40,bold = True)
+        drawLabel(f'Lap Time:{int(app.laptime)}',app.width//2,20,size = 40,bold = True)
 
         if app.turningLeft:
             if app.player.reverse:
@@ -337,8 +337,9 @@ def select_onKeyPress(app,key):
             app.stepsPerSecond = 10
         elif app.hundredcc:
             app.stepsPerSecond = 20
-        app.player = Sprite('kirby',app.width//4,app.height//4)
+
         app.stepCounter = 0
+        app.player = Sprite('kirby',app.width//4,app.height//4)
         setActiveScreen('game')
     elif key == 'backspace':
         if app.confirm != 0:
